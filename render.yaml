@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: insta-parser
+    env: node
+    plan: starter
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PUPPETEER_HEADLESS
+        value: "true"

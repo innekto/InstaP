@@ -6,6 +6,7 @@ import { v2 as cloudinary } from 'cloudinary';
 import XLSX from 'xlsx';
 import multer from 'multer';
 import { scrapeAccountsJob } from './scraper/jobs/scrapeAccounts.job.js';
+import logger from './logger.js';
 
 const app = express();
 app.use(express.json());
@@ -261,7 +262,7 @@ app.post('/scrape', upload.single('cookies'), async (req, res) => {
       dailyStats,
     });
   } catch (err) {
-    console.error(err);
+    logger.error(err);
     res.status(500).json({ ok: false, error: err.message });
   }
 });
@@ -272,6 +273,6 @@ app.get('/health', (_req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`API запущен на http://localhost:${PORT}`);
-  console.log('Swagger UI: http://localhost:' + PORT + '/docs');
+  logger.info(`API запущен на http://localhost:${PORT}`);
+  logger.info('Swagger UI: http://localhost:' + PORT + '/docs');
 });

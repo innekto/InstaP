@@ -1,5 +1,6 @@
 import puppeteer from 'puppeteer';
 import fs from 'fs';
+import logger from '../../logger.js';
 
 export async function bootstrapSession() {
   const browser = await puppeteer.launch({ headless: false });
@@ -9,7 +10,7 @@ export async function bootstrapSession() {
     waitUntil: 'networkidle2',
   });
 
-  console.log('🔐 Залогинься вручную и нажми Enter');
+  logger.info('🔐 Залогинься вручную и нажми Enter');
   await new Promise((resolve) => process.stdin.once('data', resolve));
 
   const cookies = await page.cookies();

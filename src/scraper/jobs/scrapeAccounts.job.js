@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { fetchTimeline } from '../graphql/timeline.fetcher.js';
 import { fetchTimelineGraphQL } from '../graphql/timeline.fetcher.graphql.js';
+import logger from '../../logger.js';
 
 export async function scrapeAccountsJob(
   username,
@@ -11,7 +12,7 @@ export async function scrapeAccountsJob(
     cookies: cookiesOverride,
   } = {},
 ) {
-  console.log(`🚀 Сбор постов для ${username}...`);
+  logger.info(`🚀 Сбор постов для ${username}...`);
 
   const cookies =
     Array.isArray(cookiesOverride) && cookiesOverride.length
@@ -27,11 +28,11 @@ export async function scrapeAccountsJob(
       ? result.totalPosts
       : null;
 
-  console.log(`Собрано постов: ${posts.length}`);
+  logger.info(`Собрано постов: ${posts.length}`);
 
   // сохраняем raw посты
   fs.writeFileSync(path.resolve('posts.json'), JSON.stringify(posts, null, 2));
-  console.log('✅ Все посты сохранены: posts.json');
+  logger.info('✅ Все посты сохранены: posts.json');
 
   // считаем статистику по дням
   const dailyStats = {};
@@ -45,7 +46,7 @@ export async function scrapeAccountsJob(
     path.resolve('dailyStats.json'),
     JSON.stringify(dailyStats, null, 2),
   );
-  console.log('✅ Статистика по дням сохранена: dailyStats.json');
+  logger.info('✅ Статистика по дням сохранена: dailyStats.json');
 
   return { posts, dailyStats, totalPosts };
 }

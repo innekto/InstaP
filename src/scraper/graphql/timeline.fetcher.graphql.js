@@ -1,6 +1,7 @@
 import puppeteer from 'puppeteer';
 import fs from 'fs';
 import path from 'path';
+import logger from '../../logger.js';
 
 function cookiesToSet(cookies) {
   return cookies.map(({ name, value, domain, path }) => ({
@@ -162,20 +163,20 @@ export async function fetchTimelineGraphQL(
         const url = res.url();
         if (!url.includes('/graphql/') && !url.includes('/api/graphql/'))
           return;
-        console.log('[GQL] response:', url, 'status:', res.status());
+        logger.debug('[GQL] response:', url, 'status:', res.status());
 
         const json = await res.json().catch(() => null);
         if (!json) {
-          console.log('[GQL] no json body');
+          logger.debug('[GQL] no json body');
           return;
         }
         if (json?.data) {
-          console.log('[GQL] data keys:', Object.keys(json.data));
+          logger.debug('[GQL] data keys:', Object.keys(json.data));
         } else {
-          console.log('[GQL] no data field, keys:', Object.keys(json));
+          logger.debug('[GQL] no data field, keys:', Object.keys(json));
         }
         if (json?.errors) {
-          console.log('[GQL] response errors:', JSON.stringify(json.errors));
+          logger.debug('[GQL] response errors:', JSON.stringify(json.errors));
         }
         const hasTimeline =
           !!json?.data?.user?.edge_owner_to_timeline_media ||
@@ -209,7 +210,7 @@ export async function fetchTimelineGraphQL(
           }
 
           if (!queryHash && !variablesRaw && !docId) {
-            console.log('[GQL] full url (trunc):', url.slice(0, 500));
+            logger.debug('[GQL] full url (trunc):', url.slice(0, 500));
           }
         } else if (url.includes('/api/graphql/')) {
           const params = new URLSearchParams(postData);
@@ -219,16 +220,16 @@ export async function fetchTimelineGraphQL(
         }
 
         if (!variablesRaw) {
-          console.log(
+          logger.info(
             '[GQL] request postData (trunc):',
             postData.slice(0, 500),
           );
         }
 
-        console.log('[GQL] mode:', docId ? 'doc_id' : 'query_hash');
-        console.log('[GQL] queryHash:', queryHash);
-        console.log('[GQL] docId:', docId);
-        console.log('[GQL] variablesRaw:', variablesRaw?.slice(0, 500));
+        logger.debug('[GQL] mode:', docId ? 'doc_id' : 'query_hash');
+        logger.debug('[GQL] queryHash:', queryHash);
+        logger.debug('[GQL] docId:', docId);
+        logger.debug('[GQL] variablesRaw:', variablesRaw?.slice(0, 500));
 
         if (!variablesRaw || (!queryHash && !docId)) {
           // сохраняем тело запроса для отладки
@@ -311,7 +312,7 @@ export async function fetchTimelineGraphQL(
         path.join(dir, 'first_timeline_response.json'),
         JSON.stringify(initial.json, null, 2),
       );
-      console.log('Saved debug/first_timeline_response.json');
+      logger.debug('Saved debug/first_timeline_response.json');
     } catch {}
   } else {
     try {
@@ -321,7 +322,7 @@ export async function fetchTimelineGraphQL(
         path.join(dir, 'first_timeline_response.json'),
         JSON.stringify(initial.json, null, 2),
       );
-      console.log('Saved debug/first_timeline_response.json');
+      logger.debug('Saved debug/first_timeline_response.json');
     } catch {}
   }
 
@@ -420,7 +421,7 @@ export async function fetchTimelineGraphQL(
           nextJson.__errorText,
         );
       } catch {}
-      console.warn(
+      logger.warn(
         'GraphQL non-JSON response, stopping pagination. See debug/last_graphql_error.html',
       );
       break;

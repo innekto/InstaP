@@ -1,4 +1,5 @@
 import puppeteer from 'puppeteer';
+import logger from '../../logger.js';
 
 function cookiesToSet(cookies) {
   return cookies.map(({ name, value, domain, path }) => ({
@@ -92,7 +93,7 @@ async function fetchPostData(page, postLink, debugConsole = false) {
   try {
     await page.goto(postLink, { waitUntil: 'networkidle2' });
   } catch (err) {
-    console.warn('Не удалось открыть пост:', postLink, err.message);
+    logger.warn('Не удалось открыть пост:', postLink, err.message);
     return null;
   }
 
@@ -198,21 +199,21 @@ async function fetchPostData(page, postLink, debugConsole = false) {
 
   // Логирование DOM в консоль
   if (debugConsole) {
-    console.log('--- DEBUG DOM для поста:', postLink, '---');
-    console.log(
+    logger.debug('--- DEBUG DOM для поста:', postLink, '---');
+    logger.debug(
       'HTML <article> (усечённо):',
       data.articleHTML?.slice(0, 500),
       '...',
     );
-    console.log('LD+JSON:', data.ldJson?.slice(0, 500), '...');
-    console.log('--------------------------------------');
+    logger.debug('LD+JSON:', data.ldJson?.slice(0, 500), '...');
+    logger.debug('--------------------------------------');
   }
 
   // Сохраняем на диск, если views нет
   // debug disabled
 
   const durationMs = Date.now() - startedAt;
-  console.log(`Время обработки поста: ${durationMs} ms | ${postLink}`);
+  logger.info(`Время обработки поста: ${durationMs} ms | ${postLink}`);
   return data;
 }
 
@@ -229,7 +230,7 @@ async function fetchPostsParallel(
 
   let concurrency = total;
 
-  console.log(`Общий прогресс: ${total} постов, concurrency = ${concurrency}`);
+  logger.info(`Общий прогресс: ${total} постов, concurrency = ${concurrency}`);
 
   for (let i = 0; i < total; i += concurrency) {
     const batch = postLinks.slice(i, i + concurrency);
@@ -246,7 +247,7 @@ async function fetchPostsParallel(
           text.includes('Invalid module param')
         )
           return;
-        console.log('PAGE LOG:', text);
+        logger.debug('PAGE LOG:', text);
       });
     }
 
@@ -256,7 +257,7 @@ async function fetchPostsParallel(
 
     results.forEach((data, idx) => {
       if (!data) {
-        console.log(`Пропуск поста (нет даты): ${batch[idx]}`);
+        logger.info(`Пропуск поста (нет даты): ${batch[idx]}`);
         return;
       }
       if (sinceDate && new Date(data.timestamp) < sinceDate) {
@@ -268,7 +269,7 @@ async function fetchPostsParallel(
         ...data,
       });
 
-      console.log(
+      logger.info(
         `Добавлен пост #${posts.length}/${total}: ${batch[idx]} | Тип: ${data.type}`,
       );
     });
@@ -305,7 +306,7 @@ export async function fetchTimeline(
     await page.waitForSelector('main', { timeout: 20000 });
     totalPosts = await extractTotalFromPage(page);
   } catch (err) {
-    console.warn('Ошибка при открытии страницы:', err.message);
+    logger.warn('Ошибка при открытии страницы:', err.message);
   }
 
   const cutoffDate = new Date('2026-02-02T00:00:00Z');
@@ -314,7 +315,7 @@ export async function fetchTimeline(
   const allPosts = [];
   const seenLinks = new Set();
 
-  console.log(`Собираем ссылки постов пользователя ${username}...`);
+  logger.info(`Собираем ссылки постов пользователя ${username}...`);
 
   let batchIndex = 0;
   let lastProcessedCount = 0;
@@ -366,11 +367,11 @@ export async function fetchTimeline(
 
     const batchLinks = newLinks.slice(0, batchSize);
     if (batchLinks.length === 0) {
-      console.log('Новых ссылок нет, завершаем.');
+      logger.info('Новых ссылок нет, завершаем.');
       break;
     }
 
-    console.log(
+    logger.info(
       `Партия #${batchIndex + 1}: новых ссылок ${batchLinks.length}, всего уникальных ${seenLinks.size}`,
     );
 
@@ -391,10 +392,10 @@ export async function fetchTimeline(
         : null;
 
     if (minDate) {
-      console.log(`Самая ранняя дата в партии: ${minDate.toISOString()}`);
+      logger.info(`Самая ранняя дата в партии: ${minDate.toISOString()}`);
     }
 
-    console.log(
+    logger.info(
       'Даты в партии:',
       batchPosts.map((p) => p.timestamp).filter(Boolean),
     );
@@ -405,7 +406,7 @@ export async function fetchTimeline(
     allPosts.push(...filtered);
 
     if (minDate && minDate < cutoffDate) {
-      console.log('Достигли дату старше 2026-02-02. Останавливаемся.');
+      logger.info('Достигли дату старше 2026-02-02. Останавливаемся.');
       break;
     }
 
@@ -415,7 +416,7 @@ export async function fetchTimeline(
 
   await page.close();
 
-  console.log(
+  logger.info(
     `Сбор завершен, всего постов после фильтрации: ${allPosts.length}`,
   );
   await browser.close();

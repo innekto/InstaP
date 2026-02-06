@@ -9,6 +9,13 @@ import { scrapeAccountsJob } from './scraper/jobs/scrapeAccounts.job.js';
 import logger from './logger.js';
 
 const app = express();
+process.on('unhandledRejection', (err) => {
+  logger.error('UnhandledRejection:', err);
+});
+process.on('uncaughtException', (err) => {
+  logger.error('UncaughtException:', err);
+  process.exit(1);
+});
 app.use(express.json());
 const upload = multer({ storage: multer.memoryStorage() });
 

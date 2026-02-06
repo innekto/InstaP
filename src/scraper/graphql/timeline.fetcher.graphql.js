@@ -134,7 +134,11 @@ export async function fetchTimelineGraphQL(
     process.env.PUPPETEER_HEADLESS === 'false' ? false : 'new';
   const launchArgs = [];
   if (process.env.RENDER || process.env.NODE_ENV === 'production') {
-    launchArgs.push('--no-sandbox', '--disable-setuid-sandbox');
+    launchArgs.push(
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+    );
   }
   const browser = await puppeteer.launch({ headless, args: launchArgs });
   const page = await browser.newPage();
